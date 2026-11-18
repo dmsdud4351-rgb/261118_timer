@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>치이카와 포모도로</title>
+<style>
+  :root { --bg:#fff1f5; --card:#fff; --text:#5a4a4a; --accent:#f59ab5; --muted:#a89a9a; --line:#5a4a4a; }
+  body.short { --bg:#eaf5fd; --accent:#7ab8e6; }
+  body.long  { --bg:#fffbe0; --accent:#f0c630; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#2e2227; --card:#241c20; --text:#f3e6ea; --muted:#a8999e; }
+    body.short { --bg:#1d2832; }
+    body.long  { --bg:#2d2a17; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg);
+         color:var(--text); font-family:"Malgun Gothic",system-ui,sans-serif; transition:background .4s; }
+  .card { background:var(--card); border-radius:32px; padding:28px; width:min(380px,92vw);
+          box-shadow:0 10px 40px rgba(0,0,0,.1); text-align:center; border:3px solid var(--accent); }
+  .tabs { display:flex; gap:6px; background:rgba(128,128,128,.12); padding:4px; border-radius:999px; }
+  .tabs button { flex:1; border:0; background:none; padding:8px 0; border-radius:999px; cursor:pointer;
+                 color:var(--muted); font-size:13px; font-family:inherit; }
+  .tabs button.active { background:var(--accent); color:#fff; font-weight:700; }
+  .bubble { position:relative; margin:18px auto 0; display:inline-block; background:#fff; color:#5a4a4a;
+            border:2.5px solid #5a4a4a; border-radius:18px; padding:7px 16px; font-size:14px; font-weight:700; }
+  .bubble::after { content:""; position:absolute; left:50%; bottom:-9px; width:12px; height:12px; background:#fff;
+                   border-right:2.5px solid #5a4a4a; border-bottom:2.5px solid #5a4a4a;
+                   transform:translateX(-50%) rotate(45deg); }
+  .ring { position:relative; width:240px; height:240px; margin:14px auto 6px; }
+  .ring svg.r { position:absolute; inset:0; transform:rotate(-90deg); }
+  .ring circle { fill:none; stroke-width:10; }
+  .bg { stroke:rgba(128,128,128,.18); }
+  .fg { stroke:var(--accent); stroke-linecap:round; transition:stroke-dashoffset .3s linear; }
+  .chara { position:absolute; left:50%; top:22px; width:130px; height:130px; margin-left:-65px; }
+  .chara svg { width:100%; height:100%; overflow:visible; }
+  .running .chara { animation:hop .7s ease-in-out infinite; }
+  @keyframes hop { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-8px) } }
+  .time { position:absolute; left:0; right:0; top:152px; font-size:42px; font-weight:700;
+          font-variant-numeric:tabular-nums; }
+  .count { color:var(--muted); font-size:14px; margin-bottom:18px; }
+  .ctrl { display:flex; gap:10px; justify-content:center; }
+  .ctrl button { border:2.5px solid var(--line); border-radius:999px; padding:11px 26px; font-size:16px;
+                 cursor:pointer; font-family:inherit; font-weight:700; }
+  #start { background:var(--accent); color:#fff; min-width:120px; }
+  #reset { background:var(--card); color:var(--text); }
+  details { margin-top:18px; font-size:14px; text-align:left; }
+  summary { cursor:pointer; text-align:center; list-style:none; display:inline-block; position:relative; left:50%;
+            transform:translateX(-50%); background:var(--accent); color:#fff; font-weight:700;
+            padding:6px 18px; border-radius:999px; user-select:none; }
+  summary::-webkit-details-marker { display:none; }
+  details[open] summary::after { content:" ▴"; } details:not([open]) summary::after { content:" ▾"; }
+  .set { display:flex; flex-direction:column; gap:10px; margin-top:14px; padding:14px; border-radius:24px;
+         background:rgba(255,200,215,.18); border:2.5px dashed var(--accent); }
+  .row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:18px; font-weight:700; }
+  .row.focus { background:rgba(245,154,181,.22); }
+  .row.short { background:rgba(122,184,230,.24); }
+  .row.long  { background:rgba(240,198,48,.25); }
+  .row .face { font-size:22px; }
+  .row .lbl { flex:1; color:var(--text); }
+  .step { display:flex; align-items:center; gap:4px; background:var(--card); border-radius:999px; padding:3px;
+          border:2px solid var(--line); }
+  .step button { width:26px; height:26px; border:0; border-radius:50%; background:var(--accent); color:#fff;
+                 font-size:16px; font-weight:700; line-height:1; cursor:pointer; padding:0; }
+  .step button:active { transform:scale(.88); }
+  .step input { width:34px; border:0; background:transparent; color:var(--text); text-align:center;
+                font-size:15px; font-weight:700; font-family:inherit; -moz-appearance:textfield; }
+  .step input::-webkit-inner-spin-button, .step input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  .step input:focus { outline:none; }
+  .step em { font-style:normal; font-size:12px; color:var(--muted); margin-right:4px; }
+  .toggle { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; font-weight:700;
+            color:var(--text); cursor:pointer; }
+  .toggle input { display:none; }
+  .toggle i { width:46px; height:26px; border-radius:999px; background:rgba(128,128,128,.3); position:relative;
+              transition:background .2s; border:2px solid var(--line); }
+  .toggle i::after { content:"✿"; position:absolute; left:1px; top:-1px; width:20px; height:20px; font-size:15px;
+                     line-height:20px; text-align:center; border-radius:50%; background:#fff; color:var(--accent);
+                     transition:left .2s; }
+  .toggle input:checked + i { background:var(--accent); }
+  .toggle input:checked + i::after { left:21px; }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="tabs" id="tabs">
+    <button data-mode="focus" class="active">치이카와 · 집중</button>
+    <button data-mode="short">하치와레 · 휴식</button>
+    <button data-mode="long">우사기 · 긴 휴식</button>
+  </div>
+  <div class="bubble" id="bubble">열심히 할 거야…!</div>
+  <div class="ring">
+    <svg class="r" width="240" height="240" viewBox="0 0 240 240">
+      <circle class="bg" cx="120" cy="120" r="110"/>
+      <circle class="fg" id="fg" cx="120" cy="120" r="110"/>
+    </svg>
+    <div class="chara">
+      <!-- 치이카와 -->
+      <svg id="c-focus" viewBox="0 0 120 120" fill="none" stroke="#5a4a4a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="42" cy="104" rx="10" ry="6" fill="#fff"/><ellipse cx="78" cy="104" rx="10" ry="6" fill="#fff"/>
+        <circle cx="36" cy="36" r="11" fill="#fff"/><circle cx="84" cy="36" r="11" fill="#fff"/>
+        <ellipse cx="60" cy="68" rx="40" ry="35" fill="#fff"/>
+        <ellipse cx="22" cy="78" rx="7" ry="9" fill="#fff"/><ellipse cx="98" cy="78" rx="7" ry="9" fill="#fff"/>
+        <circle cx="46" cy="64" r="3.4" fill="#5a4a4a" stroke="none"/><circle cx="74" cy="64" r="3.4" fill="#5a4a4a" stroke="none"/>
+        <ellipse cx="36" cy="75" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/><ellipse cx="84" cy="75" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/>
+        <path d="M54 71 Q60 77 66 71"/>
+      </svg>
+      <!-- 하치와레 -->
+      <svg id="c-short" class="hide" viewBox="0 0 120 120" fill="none" stroke="#5a4a4a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <defs><clipPath id="cap"><rect x="0" y="0" width="120" height="58"/></clipPath></defs>
+        <ellipse cx="42" cy="104" rx="10" ry="6" fill="#fff"/><ellipse cx="78" cy="104" rx="10" ry="6" fill="#fff"/>
+        <path d="M24 44 L28 14 L52 32 Z" fill="#9fd0f0"/><path d="M96 44 L92 14 L68 32 Z" fill="#9fd0f0"/>
+        <ellipse cx="60" cy="68" rx="40" ry="35" fill="#fff"/>
+        <g clip-path="url(#cap)"><ellipse cx="60" cy="68" rx="40" ry="35" fill="#9fd0f0"/></g>
+        <path d="M60 36 Q50 52 40 58 Q60 50 80 58 Q70 52 60 36Z" fill="#fff" stroke="none"/>
+        <ellipse cx="60" cy="68" rx="40" ry="35"/>
+        <ellipse cx="22" cy="78" rx="7" ry="9" fill="#fff"/><ellipse cx="98" cy="78" rx="7" ry="9" fill="#fff"/>
+        <path d="M41 66 Q46 60 51 66" /><path d="M69 66 Q74 60 79 66"/>
+        <ellipse cx="36" cy="76" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/><ellipse cx="84" cy="76" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/>
+        <path d="M52 72 Q60 84 68 72 Z" fill="#f08a9a"/>
+      </svg>
+      <!-- 우사기 -->
+      <svg id="c-long" class="hide" viewBox="0 0 120 120" fill="none" stroke="#5a4a4a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="42" cy="106" rx="10" ry="6" fill="#fff6b0"/><ellipse cx="78" cy="106" rx="10" ry="6" fill="#fff6b0"/>
+        <ellipse cx="42" cy="22" rx="8" ry="22" fill="#fff6b0"/><ellipse cx="78" cy="22" rx="8" ry="22" fill="#fff6b0"/>
+        <ellipse cx="60" cy="72" rx="40" ry="33" fill="#fff6b0"/>
+        <ellipse cx="22" cy="82" rx="7" ry="9" fill="#fff6b0"/><ellipse cx="98" cy="82" rx="7" ry="9" fill="#fff6b0"/>
+        <circle cx="46" cy="66" r="4" fill="#5a4a4a" stroke="none"/><circle cx="74" cy="66" r="4" fill="#5a4a4a" stroke="none"/>
+        <circle cx="47.5" cy="64.5" r="1.3" fill="#fff" stroke="none"/><circle cx="75.5" cy="64.5" r="1.3" fill="#fff" stroke="none"/>
+        <ellipse cx="34" cy="78" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/><ellipse cx="86" cy="78" rx="7" ry="4.5" fill="#ffc2d1" stroke="none"/>
+        <path d="M50 74 Q60 92 70 74 Z" fill="#f08a9a"/>
+      </svg>
+    </div>
+    <div class="time" id="time">25:00</div>
+  </div>
+  <div class="count" id="count">완료한 세션: 0</div>
+  <div class="ctrl">
+    <button id="start">시작</button>
+    <button id="reset">초기화</button>
+  </div>
+  <details>
+    <summary>🍀 설정</summary>
+    <div class="set">
+      <div class="row focus"><span class="face">🌸</span><span class="lbl">집중</span>
+        <div class="step"><button type="button" data-t="s-focus" data-d="-1">−</button><input type="number" id="s-focus" min="1" max="120" value="25"><em>분</em><button type="button" data-t="s-focus" data-d="1">+</button></div></div>
+      <div class="row short"><span class="face">🍡</span><span class="lbl">짧은 휴식</span>
+        <div class="step"><button type="button" data-t="s-short" data-d="-1">−</button><input type="number" id="s-short" min="1" max="60" value="5"><em>분</em><button type="button" data-t="s-short" data-d="1">+</button></div></div>
+      <div class="row long"><span class="face">🥕</span><span class="lbl">긴 휴식</span>
+        <div class="step"><button type="button" data-t="s-long" data-d="-1">−</button><input type="number" id="s-long" min="1" max="60" value="15"><em>분</em><button type="button" data-t="s-long" data-d="1">+</button></div></div>
+      <label class="toggle"><span>🐾 다음 단계 자동 시작</span><input type="checkbox" id="s-auto" checked><i></i></label>
+    </div>
+  </details>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const C = 2 * Math.PI * 110;
+const fg = $('fg');
+fg.style.strokeDasharray = C;
+
+const cfg = { focus:25, short:5, long:15 };
+const say = {
+  focus: ['열심히 할 거야…!', '앗, 집중 중이야!', '으으, 힘내자…!'],
+  short: ['좀 쉬자~ 후훗', '하치와레! 잠깐 쉬어요', '간식 먹을까?'],
+  long:  ['야하! 푸루룻', '우라아아! 푹 쉬자~', '야하하! 긴 휴식이다']
+};
+const pick = m => say[m][Math.floor(Math.random() * say[m].length)];
+let mode = 'focus', total = cfg.focus * 60, left = total, timer = null, endAt = 0, done = 0;
+
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('pomo-cfg') || '{}')); } catch {}
+for (const k of ['focus','short','long']) $('s-'+k).value = cfg[k];
+
+function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+function render() {
+  $('time').textContent = fmt(left);
+  fg.style.strokeDashoffset = C * (1 - left / total);
+  $('count').textContent = '완료한 세션: ' + done;
+  $('start').textContent = timer ? '일시정지' : '시작';
+  $('card').classList.toggle('running', !!timer);
+  document.title = (timer ? fmt(left) + ' · ' : '') + '치이카와 포모도로';
+}
+
+function setMode(m) {
+  stop();
+  mode = m;
+  total = left = cfg[m] * 60;
+  document.body.className = m === 'focus' ? '' : m;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  for (const k of ['focus','short','long']) $('c-'+k).classList.toggle('hide', k !== m);
+  $('bubble').textContent = pick(m);
+  render();
+}
+
+function tick() {
+  left = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+  render();
+  if (left === 0) finish();
+}
+
+function start() {
+  if (timer) return;
+  endAt = Date.now() + left * 1000;
+  timer = setInterval(tick, 250);
+  render();
+}
+function stop() { clearInterval(timer); timer = null; }
+
+function beep() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    [660, 880, 1100].forEach((f, i) => {
+      const t = i * .18, o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(.2, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + t + .2);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .2);
+    });
+  } catch {}
+}
+
+function finish() {
+  stop(); beep();
+  if (mode === 'focus') done++;
+  const next = mode !== 'focus' ? 'focus' : (done % 4 === 0 ? 'long' : 'short');
+  if (window.Notification && Notification.permission === 'granted')
+    new Notification(mode === 'focus' ? '우라아아! 집중 끝! 쉬어가요' : '휴식 끝! 다시 열심히 해요');
+  setMode(next);
+  if ($('s-auto').checked) start();
+}
+
+$('start').onclick = () => {
+  if (window.Notification && Notification.permission === 'default') Notification.requestPermission();
+  timer ? (stop(), render()) : start();
+};
+$('reset').onclick = () => setMode(mode);
+$('tabs').onclick = e => { if (e.target.dataset.mode) setMode(e.target.dataset.mode); };
+
+for (const k of ['focus','short','long']) {
+  $('s-'+k).onchange = e => {
+    cfg[k] = Math.min(+e.target.max, Math.max(1, +e.target.value || cfg[k]));
+    e.target.value = cfg[k];
+    try { localStorage.setItem('pomo-cfg', JSON.stringify(cfg)); } catch {}
+    if (k === mode) setMode(mode);
+  };
+}
+
+document.querySelectorAll('.step button').forEach(b => b.onclick = () => {
+  const i = $(b.dataset.t);
+  i.value = (+i.value || 1) + +b.dataset.d;
+  i.dispatchEvent(new Event('change'));
+});
+
+setMode('focus');
+</script>
+</body>
+</html>
